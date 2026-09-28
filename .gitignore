@@ -14,5 +14,5 @@ zig-out/
 *.log
 *.session
 *.session.*
-.tiny-jacyac.json
+.streakwise.json
 .DS_Store

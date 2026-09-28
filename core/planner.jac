@@ -270,13 +270,18 @@ def:pub dashboard(today: str = "") -> Dashboard {
     heatmap: list[HeatDay] = [];
     all_habits = [root-->[?:Habit]];
     stamps = {jid(h): {c.date for c in [h-->[?:CheckIn]]} for h in all_habits};
+    # A habit counts from its creation or its earliest (backfilled) check-in.
+    starts = {
+        jid(h): min([h.created or day.isoformat()] + list(stamps[jid(h)]))
+        for h in all_habits
+    };
     for back in range(27, -1, -1) {
         d = day - datetime.timedelta(days=back);
         iso = d.isoformat();
         due = [
             h
             for h in all_habits
-            if d.weekday() in h.days and (not h.created or h.created <= iso)
+            if d.weekday() in h.days and starts[jid(h)] <= iso
         ];
         heatmap.append(
             HeatDay(
@@ -368,7 +373,8 @@ def:pub add_habit(
     picked = sorted(
         {
             int(d)
-            for d in (days if days is not None else range(7))
+            # An omitted `days` can arrive as the string "None" over HTTP; default to daily.
+            for d in (days if isinstance(days, list) else range(7))
             if 0 <= int(d) <= 6
         }
     );

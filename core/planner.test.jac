@@ -111,6 +111,22 @@ test "habits, streaks, goals and plans stay private per account" {
             assert board["goals"] == [] and board["habits"][0]["goal"] == "";
             assert call(client, "remove_habit", {"habit_id": run}) is True;
             assert call(client, "dashboard", {})["habits"] == [];
+
+            # A check-in backfilled before the habit existed still lights up the heatmap.
+            fresh = call(
+                client, "add_habit", {"title": "Stretch", "today": "2026-09-28"}
+            );
+            call(
+                client,
+                "check_in",
+                {"habit_id": fresh, "date": "2026-09-27", "today": "2026-09-28"}
+            );
+            board = call(client, "dashboard", {"today": "2026-09-28"});
+            cell = board["heatmap"][-2];
+            assert (cell["date"], cell["done"], cell["due"])
+                == ("2026-09-27", 1, 1) , cell;
+            assert board["heatmap"][-3]["due"] == 0;
+            assert board["habits"][0]["streak"] == 1;
         } finally {
             client.close();
         }
