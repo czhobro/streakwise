@@ -1,0 +1,58 @@
+[project]
+name = "jac-planner"
+version = "0.1.0"
+default-app = "web"
+jac-version = "==0.37.21"
+
+[apps]
+[apps.web]
+kind = "web-app"
+entry-point = "web"
+
+[apps.mobile]
+kind = "mobile"
+entry-point = "mobile"
+
+[apps.mobile.client]
+[apps.mobile.client.react_native]
+release = true
+
+
+
+[apps.desktop]
+kind = "desktop"
+entry-point = "desktop"
+
+[apps.desktop.desktop]
+name = "Streakwise"
+identifier = "edu.umich.streakwise"
+backend = "${PLANNER_URL:-http://127.0.0.1:8000}"
+
+
+[apps.cli]
+kind = "cli"
+entry-point = "cli"
+
+[apps.planner]
+kind = "service"
+entry-point = "core.planner"
+
+
+[dependencies]
+[dependencies.npm]
+react-native-web = "^0.21.2"
+
+
+[byllm]
+[byllm.model]
+default_model = "anthropic/claude-sonnet-5"
+
+
+[test]
+directories = ["core"]
+
+[client]
+[client.app_meta_data]
+title = "Streakwise"
+description = "Goals, habits, streaks, and an AI day planner."
+icon = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='10' fill='%23355d45'/%3E%3Ctext x='10' y='29' font-family='sans-serif' font-size='28' font-weight='bold' fill='white'%3Es%3C/text%3E%3C/svg%3E"
