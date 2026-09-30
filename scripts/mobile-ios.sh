@@ -27,6 +27,37 @@ else
     echo "In the app, keep the server address http://127.0.0.1:8000 and tap Connect."
 fi
 
+# Jac 0.37.21's first native compile omits the runtime's auth_contract.js (a later
+# recompile adds it), so a fresh checkout's bundle fails to resolve it. Once the
+# sources are staged, copy the identical file from the web build.
+staged=.jac/mobile-rn/jac-src
+rm -rf "$staged"  # re-staged by jac below; start clean so the watcher sees this run's files
+(
+    for _ in $(seq 1 300); do
+        if [[ -f "$staged/client_runtime.js" ]]; then
+            if [[ ! -f "$staged/auth_contract.js" ]]; then
+                if [[ -f .jac/client/web/compiled/auth_contract.js ]]; then
+                    cp .jac/client/web/compiled/auth_contract.js "$staged/"
+                else
+                    cat > "$staged/auth_contract.js" <<'JS'
+class SignupResult {
+  constructor(props = {}) {
+    this.success = (Object.hasOwn(props, "success") ? props.success : null);
+    this.user_id = (Object.hasOwn(props, "user_id") ? props.user_id : "");
+    this.error = (Object.hasOwn(props, "error") ? props.error : "");
+    this.status = (Object.hasOwn(props, "status") ? props.status : 0);
+  }
+}
+export {SignupResult};
+JS
+                fi
+            fi
+            break
+        fi
+        sleep 1
+    done
+) &
+
 # JAC_RN_DEV_HOST / REACT_NATIVE_PACKAGER_HOSTNAME: address the device uses to reach Metro.
 # JAC_MOBILE_PLATFORM=web: jac's dev mode also spawns a helper "backend" for the mobile
 # entry, which otherwise tries a full Android build; the real API is the `jac run` server.

@@ -18,8 +18,8 @@ $ jac run cli -- today
 Wed 2026-09-30  ·  1/4 habits done  ·  longest streak 🔥5
    1. [ ] Study 1 hour  🔥5  → Ace this semester's projects
    2. [ ] Morning run  🔥4  → Run a 10K
-   3. [x] Stretch 10 min  🔥4
-   4. [ ] Read 20 pages  🔥2
+   3. [ ] Read 20 pages  🔥2
+   4. [x] Stretch 10 min  🔥4
 
 Goals
   ░░░░░░░░░░   0%  Ace this semester's projects  9d left  next: Outline the project spec
@@ -100,9 +100,11 @@ The mobile app is React Native (Expo) compiled from the same Jac UI. It connects
 ./scripts/mobile-ios.sh
 ```
 
-The script boots an iPhone simulator and starts Metro. When you see `Waiting on http://localhost:8081`, **press `i`**: Expo installs Expo Go in the simulator the first time and opens Streakwise. Keep the address `http://127.0.0.1:8000`, tap **Connect**, and sign in with the same account you use on the web and CLI. The first bundle takes a minute or two.
+The script boots an iPhone simulator and starts Metro. When you see `Waiting on http://localhost:8081`, **press `i`**: Expo installs Expo Go in the simulator the first time and opens Streakwise. Keep the address `http://127.0.0.1:8000`, tap **Connect**, and sign in with the same account you use on the web and CLI. The first bundle takes a minute or two. If pressing `i` doesn't bring the app up, run `xcrun simctl openurl booted exp://127.0.0.1:8081` in another terminal.
 
 **Real iPhone:** install Expo Go from the App Store, put the phone on the same Wi-Fi as your Mac, run `./scripts/mobile-ios.sh --phone`, and scan the QR code with the Camera app. In the app, connect to the `http://<your-mac-ip>:8000` address the script prints. (Some campus networks block device-to-device traffic; a phone hotspot works.)
+
+The script also works around a Jac 0.37.21 bug: the first native compile leaves out a runtime file (`auth_contract.js`), so on a fresh checkout the bundle would fail with *Unable to resolve module ./auth_contract.js*. The script copies the identical file from the web build.
 
 About the logs: Jac's mobile dev mode prints one `Client 'mobile' failed: Unsupported mobile platform 'web'` traceback. That's a helper process the script deliberately short-circuits (otherwise it would download the Android SDK). Metro and the app are unaffected.
 

@@ -754,7 +754,7 @@ def:pub PlannerApp(remote: bool = False) -> JsxElement {
                         quiet={True}
                         action={logout}
                     />
-                        if logged
+                        if logged and connected
                         else None}
                 </View>
             </View>
