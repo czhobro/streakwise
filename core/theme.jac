@@ -25,6 +25,8 @@ glob:pub C = Colors(),
              },
              "header": {
                  "flexDirection": "row",
+                 "flexWrap": "wrap",
+                 "gap": 8,
                  "justifyContent": "space-between",
                  "alignItems": "center",
                  "paddingVertical": 12

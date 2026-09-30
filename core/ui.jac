@@ -214,7 +214,7 @@ def:pub PlannerApp(remote: bool = False) -> JsxElement {
     can with entry {
         logged = jacIsLoggedIn();
         username = __getLocalStorage("planner_username") or "";
-        server = __getLocalStorage("planner_server") or "http://10.0.2.2:8000";
+        server = __getLocalStorage("planner_server") or "http://127.0.0.1:8000";
         if remote and __getLocalStorage("planner_server") {
             globalThis.__JAC_API_BASE_URL__ = server;
             connected = True;
@@ -371,6 +371,8 @@ def:pub PlannerApp(remote: bool = False) -> JsxElement {
             placeholder="Password"
             value={password}
             secureTextEntry={True}
+            autoCapitalize="none"
+            autoCorrect={False}
             onChangeText={lambda (t: str) { password = t; }}
             onSubmitEditing={authenticate}
         />
@@ -397,7 +399,7 @@ def:pub PlannerApp(remote: bool = False) -> JsxElement {
     connect_card = <View style={S.card}>
         <Text style={S.name}>Connect to your planner server</Text>
         <Text style={S.small}>
-            Android emulator: http://10.0.2.2:8000 · iOS simulator: http://127.0.0.1:8000
+            iOS simulator: http://127.0.0.1:8000 · Android emulator: http://10.0.2.2:8000 · phone: http://YOUR-MAC-IP:8000
         </Text>
         <TextInput
             accessibilityLabel="Server address"
@@ -731,7 +733,7 @@ def:pub PlannerApp(remote: bool = False) -> JsxElement {
                 if error
                 else None}
             {connect_card if not connected else signed_in if logged else auth_card}
-            <View style={[S.footer, S.between]}>
+            <View style={[S.footer, S.between, {"flexWrap": "wrap"}]}>
                 <Text style={S.small}>
                     Streakwise · web, mobile & CLI on one server
                 </Text>

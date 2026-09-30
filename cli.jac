@@ -143,7 +143,7 @@ def pick[T](items: list[T], query: str, title: Callable, what: str) -> T {
 def history_bar(states: list[str]) -> str {
     marks = {
         "done": green("■"),
-        "miss": paint("■", "31"),
+        "miss": paint("×", "31"),
         "open": "□",
         "off": dim("·")
     };
@@ -208,6 +208,54 @@ def goal_line(g: GoalView) -> str {
     return f"{bar} {g.progress:>3}%  {g.title}{when}{step}";
 }
 
+async def seed_demo(board: Dashboard, day: datetime.date) -> None {
+    if board.habits or board.goals {
+        raise ValueError(
+            "seed-demo only runs on an empty account (this one already has data)."
+        );
+    }
+    iso = lambda (offset: int) -> str { (
+        day + datetime.timedelta(days=offset)
+    ).isoformat(); };
+    week_ago = iso(-7);
+    run = await add_goal("Run a 10K", "Feel strong before winter", iso(45), week_ago);
+    for (title, done) in [
+        ("Run 5K without stopping", True),
+        ("Run 8K", False),
+        ("Sign up for a race", False)
+    ] {
+        step = await add_milestone(run, title);
+        if done {
+            await toggle_milestone(step);
+        }
+    }
+    study = await add_goal("Ace this semester's projects", "", iso(9), week_ago);
+    for title in [
+        "Outline the project spec",
+        "Pass the public tests",
+        "Write the README"
+    ] {
+        await add_milestone(study, title);
+    }
+    habits = [
+        ("Morning run", [0, 2, 4, 6], run, [2, 3, 5, 7]),
+        ("Study 1 hour", [0, 1, 2, 3, 4], study, [1, 2, 3, 4, 5, 6, 7]),
+        ("Read 20 pages", [0, 1, 2, 3, 4, 5, 6], "", [1, 2, 4, 5, 6, 7]),
+        ("Stretch 10 min", [0, 1, 2, 3, 4, 5, 6], "", [1, 2, 3])
+    ];
+    for (title, days, goal, back) in habits {
+        habit = await add_habit(title, days, goal, week_ago);
+        for b in back {
+            if (day - datetime.timedelta(days=b)).weekday() in days {
+                await check_in(habit, iso(-b), day.isoformat());
+            }
+        }
+    }
+    print(
+        green("✓ Seeded a sample week: 2 goals, 4 habits, and a week of check-ins.\n")
+    );
+}
+
 async def main -> int {
     parser = argparse.ArgumentParser(
         prog="streakwise",
@@ -250,6 +298,7 @@ async def main -> int {
     p.add_argument("milestone");
     p = sub.add_parser("plan", help="plan the rest of today");
     p.add_argument("note", nargs="?", `default="", help="energy, classes, free time…");
+    sub.add_parser("seed-demo", help="fill an empty account with a sample week");
     args = parser.parse_args();
     command = args.command or "today";
     base = str(args.url).rstrip("/");
@@ -300,6 +349,11 @@ async def main -> int {
                 print(
                     f"    {history_bar(h.history)}  best {h.best} · {h.rate30}% last 30 days"
                         + (f" · {h.goal}" if h.goal else "")
+                );
+            }
+            if board.habits {
+                print(
+                    dim("    ■ done  × missed  □ today  · rest day   (last 14 days)")
                 );
             }
         } elif command == "goals" {
@@ -414,6 +468,9 @@ async def main -> int {
             );
             done = await toggle_milestone(m.id);
             print((green("☑ Done: ") if done else "☐ Reopened: ") + m.title);
+        } elif command == "seed-demo" {
+            await seed_demo(board, datetime.date.today());
+            show_today(await dashboard(today));
         } elif command == "plan" {
             now = datetime.datetime.now().strftime("%H:%M");
             plan = await plan_day(today, now, args.note);
