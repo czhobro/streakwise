@@ -1,152 +1,157 @@
-# Tiny JacYac
+# Streakwise
 
-Imported from [marsninja/tiny_jacyac](https://github.com/marsninja/tiny_jacyac)
-at commit `df87b2c1241e9865acf8eb970418df8c0603ad52`.
-Scaffold your own copy with `jac create mysocial --awetiny`.
+**Chris Zhobro · UMID: `XXXXXXXX`**
 
-A small social app in fewer than 1,000 physical lines of Jac and `jac.toml`,
-including tests, blank lines, and styles. Six apps share one product:
-web, React Native mobile, native desktop host, CLI, feed service, scoring service.
-The shared mobUI screen supports registration, sign-in, posting, likes, deletion,
-and reputation. Posts persist on the shared graph; only their authors can delete them.
+Streakwise is a goals-and-habits planner written entirely in [Jac](https://jaclang.org).
+You set goals and break them into milestones, attach small daily habits to them,
+and check those habits off from whichever screen is closest: the web app on your laptop,
+the native app on your phone, or one command in the terminal. Every check-in feeds
+streaks, a 4-week heatmap and goal progress, and an AI coach turns today's open
+habits and nearest deadlines into a time-blocked plan for the rest of your day.
 
-## Screenshots
-
-One community across four clients. These captures show the running app with
-sample posts shared between the web, mobile, desktop, and CLI clients.
-
-### Web · desktop browser
-
-The two-column layout at **1440 × 1000**, with the composer, feed, and reputation.
-
-![Web client showing the shared feed and 23 reputation points](docs/screenshots/web-desktop.png)
-
-### Web · tablet browser
-
-The same web client adapts to a single column at **768 × 1024**.
-
-<img src="docs/screenshots/web-tablet.png" alt="Tablet-sized web client with the composer above the feed" width="560">
-
-### Mobile · native Android
-
-The **React Native Android app**, captured directly from a Pixel 5 emulator
-running Android 11 at **1080 × 2340**. These captures use the debug APK with
-Metro and the shared backend. The two views show composing a post, then the
-feed and reputation.
-
-| Compose | Feed and reputation |
+| Web | iPhone (React Native) |
 | --- | --- |
-| <img src="docs/screenshots/mobile-android-compose.png" alt="Native Android app showing the post composer" width="320"> | <img src="docs/screenshots/mobile-android-feed.png" alt="Native Android app showing a shared post, owner-only deletion, and 23 reputation points" width="320"> |
+| ![Web dashboard](docs/web.png) | <img src="docs/mobile-top.png" alt="iPhone app" width="300"> |
 
-### Native desktop · Linux
+```text
+$ jac run cli -- today
+Wed 2026-09-30  ·  1/4 habits done  ·  longest streak 🔥5
+   1. [ ] Study 1 hour  🔥5  → Ace this semester's projects
+   2. [ ] Morning run  🔥4  → Run a 10K
+   3. [x] Stretch 10 min  🔥4
+   4. [ ] Read 20 pages  🔥2
 
-The packaged **1200 × 800** WebKitGTK window, showing the shared feed and sign-in.
-
-![Native Linux desktop client displaying the community feed](docs/screenshots/desktop.png)
-
-### CLI · terminal
-
-The CLI reads the same posts and reputation from the two services.
-
-![Terminal running jac run cli to display the feed and 23 reputation points](docs/screenshots/cli.png)
-
-## How it fits
-
-The three graphical clients import one responsive mobUI component. The CLI uses
-the same typed feed API; the feed calls the stateless scoring service. Jac supplies
-authentication, graph persistence, transport, and generated platform packaging.
-The four client entry points are `web.jac`, `mobile.jac`, `desktop.jac`, and
-`cli.jac` at the project root; shared code and the two services live in `core/`.
-
-| Authored files | Physical lines |
-| --- | ---: |
-| Shared UI and styles | 535 |
-| Feed and scoring services | 170 |
-| CLI | 116 |
-| Web, mobile, desktop entry points | 19 |
-| Tests | 66 |
-| `jac.toml` | 51 |
-| **Total** | **957** |
-
-Reproduce the count with `wc -l jac.toml *.jac core/*.jac`.
-Documentation, dependencies, compiler/runtime code, and generated platform files
-are outside this application-source count. Local compatibility checks use Jac
-`0.37.18`. The project uses the installed Jac binary without a compiler-source
-override. Web fleet routing and authentication are exercised against that binary.
-The desktop entry includes a `with entry` block with a `None;` no-op so the packaged host has
-the bootstrap artifact expected by the current desktop runtime.
-The original desktop captures used a generator fix with explicitly typed port
-values so the native host includes the port number in its navigation URL.
-The original native Android captures additionally used a local Jac runtime fix that
-exports `useJacState` and `jacSetToken`; both are required to render the shared
-screen and sign in. Native Android and iOS execution must be validated separately
-from the mobile browser preview on the installed runtime.
-
-## Run
-
-From this project directory, using the locally installed Jac binary:
-
-```bash
-jac install
-jac run --serve --fleet web
+Goals
+  ░░░░░░░░░░   0%  Ace this semester's projects  9d left  next: Outline the project spec
+  ███░░░░░░░  33%  Run a 10K  45d left  next: Run 8K
 ```
 
-Open http://localhost:8000. Create an account in the UI. Use `--fleet` for this
-example: it runs the two services in separate processes and mounts their
-authentication endpoints behind the web gateway.
-Accounts live in the feed service, using its built-in `/api/feed/user/*` endpoints.
-Scoring is stateless: 10 points per post plus 3 per received like.
-If scoring is unavailable, the feed remains usable and labels the missing score.
+## Features
 
-## Other clients
+- **Habits on your own schedule.** Daily, weekdays, or any set of days (`mon,wed,fri`). Rest days never break a streak, and today's unchecked habit doesn't either until the day is over.
+- **Streak math you can trust.** Current streak, best streak, 30-day completion rate, a 14-day history strip per habit, and a 28-day heatmap across all habits. Forgot to log yesterday? Backfill up to 7 days.
+- **Goals with milestones.** Target dates with a days-left countdown, milestone checklists that drive a progress bar, and habits linked to the goal they support.
+- **AI day planner.** "Plan my day" sends open habits (longest streaks first), goal deadlines and next steps, plus your free-text note ("class 2–4, low energy tonight"), to Claude through Jac's `by llm()`. The result is a typed `DayPlan` of time blocks starting from your current time. Without an API key, or if the model fails, it falls back to a rule-based plan, so the button always works.
+- **Private accounts.** Each user's data lives on their own graph root. Every endpoint rejects anonymous callers, and tests show one user can't read or modify another's data.
 
-```bash
-jac run cli -- login alice       # prompts for the password
-jac run cli -- post "Hello from my terminal"
-jac run cli -- feed              # prints post IDs for like/delete
-jac run cli -- score
-jac run cli -- logout
-jac run desktop
-jac run --dev mobile
-```
+## Setup
 
-The CLI stores a token in `~/.tiny-jacyac.json` with owner-only permissions.
-`TINY_JACYAC_SESSION` selects another session file. `TINY_JACYAC_URL` selects
-the backend for CLI and desktop; CLI also accepts `--url` before its command.
-Mobile asks for a server address: use your computer's LAN address on a phone,
-or `http://10.0.2.2:8000` in the Android emulator during development.
-The packaged Android release uses Android's default network policy and needs an
-HTTPS backend; its JavaScript is embedded, so it does not need Metro.
-Start the web fleet first.
-All clients connect to the same feed, accounts, and scores.
+Prerequisites:
+
+- **macOS or Linux** (Windows via WSL). Nothing else for the web app and CLI: the `jac` binary ships its own Python, Bun and package managers.
+- **Jac 0.37.21.** Install that exact version: the current 0.37.23 macOS build has a packaging bug (fixed upstream in jaseci-labs/jac#9598, not yet released) that breaks `jac install`.
+
+  ```bash
+  curl -fsSL https://raw.githubusercontent.com/jaseci-labs/jaseci/main/scripts/install.sh | bash -s -- --version 0.37.21
+  ```
+  Then add `~/.local/bin` to your `PATH` as the installer prints, open a new terminal, and check that `jac --version` says `0.37.21`.
+- **For the mobile app:** Xcode with an iOS Simulator (tested with Xcode 14.3 and iOS 16.4), or the free **Expo Go** app on an iPhone.
+- **Optional, for AI plans:** an Anthropic API key in the server's environment.
+
+## Run it
 
 ```bash
-jac build web
-jac build desktop
-jac build --platform web mobile       # browser preview of the mobile entry
-jac build --platform android mobile   # Android APK; provisions native tooling
-jac build --platform ios mobile       # requires macOS and Xcode
+git clone <this repo> streakwise && cd streakwise
+jac install          # first time only: Python and npm dependencies
+jac run              # web app + server on http://localhost:8000
 ```
 
-Desktop uses an OS webview in a compiled native host. The feed and scoring
-services execute on the server. No standalone LLVM scoring executable is included.
-To work on the compiler itself, add `[dev].jaclang_source` pointing to an existing
-Jac source directory. Ordinary application use does not require a source checkout.
+Open http://localhost:8000, click **New here? Create an account**, and you're in.
+Data is stored under `.jac/` in the project folder and survives restarts.
 
-## Validate
+To enable the AI planner, start the server with a key:
 
 ```bash
-jac check --nowarn
-JAC_TEST_JOBS=0 jac test
-jac fmt . --check
-jac browse open http://localhost:8000
-jac browse snapshot
-jac browse fill '[aria-label="Username"]' alice
-jac browse fill '[aria-label="Password"]' your-password
-jac browse click '[aria-label="Sign in"]'
-jac browse console
+ANTHROPIC_API_KEY=sk-ant-... jac run
 ```
 
-The tests cover account impersonation, unauthorized writes/deletion, post length,
-like/unlike, scoring thresholds, and the line limit. Build output, dependency
-trees, local credentials, and screenshots under `.jac/` are generated artifacts.
+The model is set in `jac.toml` (`[byllm.model] default_model = "anthropic/claude-sonnet-5"`). AI plans are capped at 20 per account per day.
+
+## CLI
+
+With `jac run` going in another terminal, from the project folder:
+
+```bash
+jac run cli -- signup <username>     # or: login <username>
+jac run cli -- seed-demo             # optional: fill an empty account with a sample week
+jac run cli -- today                 # today's checklist + goal progress
+jac run cli -- done run              # check in by (partial) name or number; run again to undo
+jac run cli -- done read --date 2026-09-29   # backfill up to 7 days
+jac run cli -- add-habit "Read 20 pages" --days weekdays --goal 10k
+jac run cli -- add-goal "Run a 10K" --by 2026-11-15 --why "Feel strong before winter"
+jac run cli -- step 10k "Run 8K"     # add a milestone to a goal
+jac run cli -- tick 8k               # check off a milestone
+jac run cli -- habits                # streaks + 14-day history for every habit
+jac run cli -- week                  # 4-week heatmap
+jac run cli -- plan "class 2-4pm, tired tonight"
+jac run cli -- --help
+```
+
+The session token is saved to `~/.streakwise.json` (mode 600). Use `--url` or `PLANNER_URL` to point at another server.
+Tip: `alias sw='jac run cli --'`, then `sw today`, `sw done run`.
+
+## Mobile app
+
+The mobile app is React Native (Expo) compiled from the same Jac UI. It connects to the `jac run` server.
+
+**iOS Simulator (no phone needed):** with `jac run` going in one terminal, run in a second terminal:
+
+```bash
+./scripts/mobile-ios.sh
+```
+
+The script boots an iPhone simulator and starts Metro. When you see `Waiting on http://localhost:8081`, **press `i`**: Expo installs Expo Go in the simulator the first time and opens Streakwise. Keep the address `http://127.0.0.1:8000`, tap **Connect**, and sign in with the same account you use on the web and CLI. The first bundle takes a minute or two.
+
+**Real iPhone:** install Expo Go from the App Store, put the phone on the same Wi-Fi as your Mac, run `./scripts/mobile-ios.sh --phone`, and scan the QR code with the Camera app. In the app, connect to the `http://<your-mac-ip>:8000` address the script prints. (Some campus networks block device-to-device traffic; a phone hotspot works.)
+
+About the logs: Jac's mobile dev mode prints one `Client 'mobile' failed: Unsupported mobile platform 'web'` traceback. That's a helper process the script deliberately short-circuits (otherwise it would download the Android SDK). Metro and the app are unaffected.
+
+## How the pieces fit together
+
+```
+                         ┌────────────────────────────────────────┐
+  web.jac    ──┐         │  core/planner.jac   (service app)      │
+  (browser)    │         │  Goal ─Supports→ Habit ─→ CheckIn      │
+               ├─ shared │     └─→ Milestone        Profile       │
+  mobile.jac ──┤ core/   │  10 typed endpoints, per-user roots    │
+  (iOS/Expo)   │ ui.jac  │            │                           │
+               │         │  core/coach.jac  by llm() → DayPlan    │
+  cli.jac  ────┴─────────┤            (+ rule-based fallback)     │
+  (terminal)   typed bridge calls      persisted graph in .jac/   │
+                         └────────────────────────────────────────┘
+```
+
+- **Server:** [`core/planner.jac`](core/planner.jac) is a Jac service app. Goals, milestones, habits and check-ins are graph nodes on each user's root, joined by typed edges (`Goal -Supports-> Habit`), and Jac persists that graph automatically. All streak and heatmap math happens here once, so every client shows identical numbers. [`core/coach.jac`](core/coach.jac) holds the AI planner. Its helpers are `_`-prefixed so they are never exposed as HTTP endpoints.
+- **One UI, two platforms:** [`core/ui.jac`](core/ui.jac) is written in Jac's mobUI primitives, which compile to React DOM for the web ([`web.jac`](web.jac)) and to native React Native views for the phone ([`mobile.jac`](mobile.jac)). The layout switches from one column to two at 860 px.
+- **CLI:** [`cli.jac`](cli.jac) imports the very same typed functions (`dashboard`, `check_in`, `plan_day`, ...) that the UI calls. Jac turns those imports into authenticated HTTP bridge calls, so there's no hand-written REST client anywhere.
+- **Config:** [`jac.toml`](jac.toml) declares the workspace apps (`web`, `mobile`, `desktop`, `cli`, and the `planner` service), with `default-app = "web"` so plain `jac run` serves the web app and the server together.
+
+A typical day: plan the week and set goals on the web, check off habits on the phone,
+`sw done read` from the terminal between builds, and hit **Plan my day** when the afternoon gets away from you.
+
+## What makes it stand out
+
+- **Four clients, one source of truth, verified end to end.** A check-in tapped in the iPhone app appears instantly in `jac run cli -- today` and on the web. The web and mobile UIs are literally the same Jac component.
+- **AI that degrades gracefully.** The planner returns a typed `DayPlan` object, not free text. Habit IDs the model invents are discarded. Bad output, no key, or the daily cap all fall back to a deterministic plan. The note is treated as data (prompt-injection-aware) and truncated.
+- **Security as a feature.** Per-user graph roots, a sign-in guard on every endpoint, internal helpers kept off the API, a per-account AI budget, and a session file readable only by its owner.
+- **Tested.** `jac test` covers streak math on real calendars (rest days, open today, backfills), goal progress, input validation, cross-user isolation, the rule-based planner, and the AI path using a mocked model:
+
+  ```bash
+  JAC_TEST_JOBS=0 jac test     # all tests
+  jac check                    # type-checks all 5 apps
+  ```
+
+## Project layout
+
+```
+jac.toml              workspace: apps, default app, AI model
+core/planner.jac      server: data model, streak math, endpoints
+core/coach.jac        AI day planner (byLLM) + rule-based fallback
+core/ui.jac           shared web + mobile UI (mobUI)
+core/theme.jac        colors and styles
+core/*.test.jac       tests
+web.jac  mobile.jac  desktop.jac  cli.jac    client entry points
+scripts/mobile-ios.sh one-command iOS simulator / iPhone launcher
+```
+
+Scaffolded from Jac's `jac create --awetiny` example (web, mobile, CLI and service layout), with the social-feed code replaced by the planner.
