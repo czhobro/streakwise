@@ -1,6 +1,6 @@
 # Streakwise
 
-**Chris Zhobro · UMID: `XXXXXXXX`**
+**Chris Zhobro · UMID: 89457536**
 
 Streakwise is a goals-and-habits planner written entirely in [Jac](https://jaclang.org).
 You set goals and break them into milestones, attach small daily habits to them,
